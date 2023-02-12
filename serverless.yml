@@ -1,0 +1,77 @@
+service: notes-api
+frameworkVersion: "3"
+
+#Custom variables
+custom:
+  region: ${opt:region, 'ap-southeast-2'}
+  stage: ${opt:stage, 'dev'}
+  notes_table_name: ${self:custom.stage}-notes
+
+plugins:
+  - serverless-iam-roles-per-function
+
+provider:
+  name: aws
+  runtime: nodejs14.x
+  stage: ${self:custom.stage} # referencing value for stage from custom variable
+  region: ${self:custom.region}
+  environment:
+    REGION: ${self:custom.region}
+    NOTES_TBL_NAME: ${self:custom.notes_table_name}
+    AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1
+
+functions:
+  authorizer:
+    handler: authorizer.handler
+    environment:
+      COGNITO_USERPOOL_ID: !Ref cognitoUserPool
+      COGNITO_CLIENT_ID: !Ref cognitoUserPoolClient
+  getAllNotes:
+    handler: handler.getAllNotes
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:Scan
+        Resource: !GetAtt notesTable.Arn
+    events:
+      - http:
+          method: GET
+          path: /notes
+          authorizer: authorizer
+  createNote:
+    handler: handler.createNote
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:PutItem
+        Resource: !GetAtt notesTable.Arn
+    events:
+      - http:
+          method: POST
+          path: /notes
+  updateNote:
+    handler: handler.updateNote
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:UpdateItem
+        Resource: !GetAtt notesTable.Arn
+    events:
+      - http:
+          method: PUT
+          path: /notes/{id}
+  deleteNote:
+    handler: handler.deleteNote
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:DeleteItem
+        Resource: !GetAtt notesTable.Arn
+    events:
+      - http:
+          method: DELETE
+          path: /notes/{id}
+resources:
+  - ${file(resources-cognito.yml)}
+  - ${file(resources-dynamo.yml)}
+

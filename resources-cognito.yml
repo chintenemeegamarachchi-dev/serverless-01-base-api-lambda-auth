@@ -1,0 +1,31 @@
+Resources:
+  cognitoUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: ${self:provider.stage}-notes-user-pool
+      UsernameAttributes:
+        - email
+      AutoVerifiedAttributes:
+        - email
+  cognitoUserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: ${self:provider.stage}-notes-user-pool-client
+      UserPoolId: !Ref cognitoUserPool
+      AllowedOAuthFlowsUserPoolClient: True
+      SupportedIdentityProviders:
+        - COGNITO
+      AllowedOAuthScopes:
+        - email
+        - openid
+        - profile
+      AllowedOAuthFlows:
+        - implicit
+      CallbackURLs:
+        - http://localhost:3044/
+      GenerateSecret: true
+  cognitoUserPoolDomain:
+    Type: AWS::Cognito::UserPoolDomain
+    Properties:
+      Domain: notes-appsolve
+      UserPoolId: !Ref cognitoUserPool
