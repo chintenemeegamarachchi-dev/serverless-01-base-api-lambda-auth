@@ -37,7 +37,10 @@ functions:
       - http:
           method: GET
           path: /notes
-          authorizer: authorizer
+          authorizer: 
+            name: authorizer
+            type: COGNITO_USER_POOLS
+            arn: !GetAtt cognitoUserPool.Arn            
   createNote:
     handler: handler.createNote
     iamRoleStatements:

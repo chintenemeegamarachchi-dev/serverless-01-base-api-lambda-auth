@@ -30,6 +30,7 @@ module.exports.handler = async (event, context, callBack) => {
   const token = event.authorizationToken;
   try {
     const payload = await jwtTokenVerifier.verify(token);
+    console.log(payload);
     callBack(
       null,
       generatePolicy(payload.principalId, "Allow", event.methodArn)
